@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdio.h>
+
 struct state {
   long  regs[8];
   long  id;
@@ -8,16 +10,19 @@ struct state {
 extern "C" void ut_switch(state *save, state *load);
 
 namespace scheduler {
+  void init();
   void yield();
+  [[ noreturn ]] void yieldGuard();
   template<typename T> struct state * addTask(const T method);
 }
 
-struct state * volatile activeTask = NULL;
+extern struct state * volatile activeTask;
 
 namespace scheduler {
 
-  long totalYields = 0;
-  struct state $main;
+  extern long _id;
+  extern long totalYields;
+  extern struct state $main;
 
   template<typename T> struct Link {
     Link<T> *   next;
@@ -92,27 +97,17 @@ namespace scheduler {
     }
   };
 
-  List<struct state> taskList;
+  extern List<struct state> taskList;
 
-  [[ noreturn ]] void yieldGuard() {
-    taskList.del();
-
-    if (!taskList.total) {
-      ut_switch(activeTask, &$main);
-    }
-
-    scheduler::yield();
-    throw 0xdead;
+  template<typename T> int run(const T method) {
+    ut_switch(&$main, activeTask = addTask(method));
+    return 0;
   }
 
-  void init() {
-  } 
-  
-  long _id = 0;
-
   template<typename T> struct state * addTask(const T method) {
-    long* sstack = new long[512];
-    sstack[511] = (long)yieldGuard;
+    long* sstack = new long[512];   // create a 4096 byte stack
+    sstack[511] = (long)yieldGuard; // set return address to yieldGuard
+
     struct state * task = new struct state();
     task->regs[6] = (long)method;
     task->regs[7] = (long)&sstack[511];
@@ -121,20 +116,6 @@ namespace scheduler {
     taskList.add(task);
 
     return task;
-  }
-
-  void yield() {
-    taskList.curr = taskList.curr->next;
-    auto callerTask = activeTask;
-    activeTask = taskList.curr->data;
-    totalYields++;
-
-    ut_switch(callerTask, activeTask);
-  }
-
-  template<typename T> int run(const T method) {
-    ut_switch(&$main, activeTask = addTask(method));
-    return 0;
   }
 
 }

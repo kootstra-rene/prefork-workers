@@ -1,3 +1,5 @@
+#include "scheduler.h"
+
 asm(
   ".text\n"
   ".globl ut_switch\n"
@@ -29,3 +31,37 @@ asm(
   "movq %rcx, %rsp\n"
   "jmp *%rdx\n"
 );
+
+struct state * volatile activeTask = NULL;
+
+namespace scheduler {
+  long _id = 0;
+  long totalYields = 0;
+  struct state $main;
+
+  List<struct state> taskList;
+
+  void init() {
+  } 
+
+  void yield() {
+    taskList.curr = taskList.curr->next;
+    auto callerTask = activeTask;
+    activeTask = taskList.curr->data;
+    totalYields++;
+
+    ut_switch(callerTask, activeTask);
+  }
+
+  [[ noreturn ]] void yieldGuard() {
+    taskList.del();
+
+    if (!taskList.total) {
+      ut_switch(activeTask, &$main);
+    }
+
+    scheduler::yield();
+    throw 0xdead;
+  }
+
+}
