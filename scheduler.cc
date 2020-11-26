@@ -1,6 +1,6 @@
-#include "scheduler.h"
+#include <cstddef>
 
-extern "C" void ut_switch(state *save, state *load);
+#include "scheduler.h"
 
 asm(
   ".text\n"
@@ -34,7 +34,13 @@ asm(
   "jmp *%rdx\n"
 );
 
+extern "C" void ut_switch(void *save, void *load);
+
 namespace scheduler {
+
+  struct state {
+    long  regs[8];
+  };
 
   template<typename T> struct Link {
     Link<T> *   next;
@@ -104,12 +110,11 @@ namespace scheduler {
 
   };
 
-  long _id = 0;
   long totalYields = 0;
   struct state $main;
 
   List<struct state> taskList;
-  struct state * volatile activeTask = NULL;
+  void * volatile activeTask = NULL;
 
   void yield() {
     taskList.curr = taskList.curr->next;
@@ -131,14 +136,21 @@ namespace scheduler {
     throw 0xdead;
   }
 
-  void addTask(struct state * const task) {
-    taskList.add(task);
-  }
-
   void run(void (*boot_strap)(void)) {
     boot_strap();
 
     activeTask = taskList.head->data;
     ut_switch(&$main, activeTask);
+  }
+
+  void addTask(void (*method)()) {
+    long* sstack = new long[512];   // create a 4096 byte stack
+    sstack[511] = (long)yieldGuard; // set return address to yieldGuard
+
+    struct state * task = new struct state();
+    task->regs[6] = (long)method;
+    task->regs[7] = (long)&sstack[511];
+
+    taskList.add(task);
   }
 }

@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
+#include <cstdlib>
 
 #include "scheduler.h"
 
@@ -18,12 +20,17 @@ void reader() {
   const int blockSize = 64*1024;
   char *block = new char[blockSize];
 
+  int32_t hash = 7;
   for (;;) {
     auto n = _read(fd, block, blockSize);
     if (n == 0) break;
+    for (size_t i = 0; i < n; i++) {
+      hash = hash * 31 + block[i];
+    }
   }
 
   delete [] block;
+  fprintf(stdout, "%d\n", hash);
 }
 
 int main(/*int argc, char ** argv*/) { 
@@ -34,7 +41,9 @@ clock_gettime(CLOCK_MONOTONIC, &tstart);
     scheduler::addTask(reader);
     scheduler::addTask(reader);
     scheduler::addTask(reader);
-    scheduler::addTask(reader);
+    scheduler::addTask([]() {
+      reader();
+    });
   });
 
 clock_gettime(CLOCK_MONOTONIC, &tend);
