@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
@@ -30,8 +31,6 @@ void task() {
   scheduler::addTask(reader);
   scheduler::addTask(reader);
   scheduler::addTask(reader);
-
-  // scheduler::taskList.dump();
 }
 
 int main(/*int argc, char ** argv*/) { 
