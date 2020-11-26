@@ -26,20 +26,16 @@ void reader() {
   delete [] block;
 }
 
-void task() {
-  scheduler::addTask(reader);
-  scheduler::addTask(reader);
-  scheduler::addTask(reader);
-  scheduler::addTask(reader);
-}
-
 int main(/*int argc, char ** argv*/) { 
-  scheduler::init();
-
 struct timespec tstart={0,0}, tend={0,0};
 clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-  scheduler::run(task);
+  scheduler::run([]() {
+    scheduler::addTask(reader);
+    scheduler::addTask(reader);
+    scheduler::addTask(reader);
+    scheduler::addTask(reader);
+  });
 
 clock_gettime(CLOCK_MONOTONIC, &tend);
 double delta_t = ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec);

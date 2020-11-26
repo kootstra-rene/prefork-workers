@@ -109,9 +109,6 @@ namespace scheduler {
   List<struct state> taskList;
   struct state * volatile activeTask = NULL;
 
-  void init() {
-  } 
-
   void yield() {
     taskList.curr = taskList.curr->next;
     auto callerTask = activeTask;
@@ -136,4 +133,10 @@ namespace scheduler {
     taskList.add(task);
   }
 
+  void run(void (*boot_strap)(void)) {
+    boot_strap();
+
+    activeTask = taskList.head->data;
+    ut_switch(&$main, activeTask);
+  }
 }

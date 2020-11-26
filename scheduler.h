@@ -10,10 +10,9 @@ struct state {
 extern "C" void ut_switch(state *save, state *load);
 
 namespace scheduler {
-  void init();
+  void run(void (*boot_strap)(void));
   void yield();
   [[ noreturn ]] void yieldGuard();
-  template<typename T> struct state * addTask(const T method);
   void addTask(struct state * const task);
 
   extern long _id;
@@ -23,11 +22,6 @@ namespace scheduler {
 }
 
 namespace scheduler {
-
-  template<typename T> int run(const T method) {
-    ut_switch(&$main, activeTask = addTask(method));
-    return 0;
-  }
 
   template<typename T> struct state * addTask(const T method) {
     long* sstack = new long[512];   // create a 4096 byte stack
