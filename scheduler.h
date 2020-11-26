@@ -7,8 +7,6 @@ struct state {
   long  id;
 };
 
-extern "C" void ut_switch(state *save, state *load);
-
 namespace scheduler {
   void run(void (*boot_strap)(void));
   void yield();

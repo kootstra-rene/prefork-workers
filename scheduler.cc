@@ -1,5 +1,7 @@
 #include "scheduler.h"
 
+extern "C" void ut_switch(state *save, state *load);
+
 asm(
   ".text\n"
   ".globl ut_switch\n"
