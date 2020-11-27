@@ -47,7 +47,7 @@ namespace scheduler {
     Link<T> *   prev;
     T *         data;
 
-    Link(T * d, Link<T> *before = NULL) {
+    explicit Link(T * d, Link<T> *before = NULL) {
       data = d;
 
       if (before == NULL) {
@@ -62,6 +62,9 @@ namespace scheduler {
       }
     }
 
+    ~Link() {
+      delete data;
+    }
   };
 
   template<typename T> struct List {
@@ -70,7 +73,7 @@ namespace scheduler {
     Link<T> * curr;
     long      total;
 
-    List() {
+    explicit List() {
       head = tail = NULL;
     }
 
