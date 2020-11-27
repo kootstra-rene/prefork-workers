@@ -24,7 +24,7 @@ namespace trace {
       double stop = ((double)_stop.tv_sec + 1.0e-9*_stop.tv_nsec);
       double delta_t = stop - start;
 
-      sprintf(buffer, ",{\"dur\":%ld, \"name\":\"%s\",\"ph\":\"X\",\"pid\":0,\"tid\":%ld,\"ts\":%ld}\n", long(delta_t*1.0e6), _name, (long)scheduler::activeTask, long(start*1.0e6));
+      sprintf(buffer, ",{\"dur\":%ld, \"name\":\"%s\",\"ph\":\"X\",\"pid\":%d,\"tid\":%ld,\"ts\":%ld}\n", long(delta_t*1.0e6), _name, scheduler::getpid(), (long)scheduler::activeTask, long(start*1.0e6));
       log(buffer);
     }
 
@@ -34,4 +34,5 @@ namespace trace {
     static char buffer[128];
   };
 
+  #define TRACE()   trace::CompleteEvent e##__LINE__(__PRETTY_FUNCTION__);
 }

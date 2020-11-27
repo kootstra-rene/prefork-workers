@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace scheduler {
 
   void run(void (*method)());
@@ -10,4 +12,6 @@ namespace scheduler {
 
   extern long totalYields;
   extern void * volatile activeTask;
+
+  int32_t getpid();
 }

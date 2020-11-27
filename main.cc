@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
+#include <sys/wait.h>
 
 #include "scheduler.h"
 #include "trace.h"
@@ -11,7 +12,7 @@
 size_t _read(int fd, char* buffer, size_t len) { 
   size_t n;
   {
-    trace::CompleteEvent e(__PRETTY_FUNCTION__);
+    TRACE();
     n = read(fd, buffer, len);
   }
   if (n) scheduler::yield();
@@ -19,7 +20,7 @@ size_t _read(int fd, char* buffer, size_t len) {
 }
 
 void reader() {
-  trace::CompleteEvent e(__PRETTY_FUNCTION__);
+  TRACE();
 
   int fd = open("../largefile.bin", O_RDONLY | O_NONBLOCK | O_NDELAY);
   if (-1 == fd) return;
@@ -27,44 +28,45 @@ void reader() {
   const int blockSize = 64*1024;
   char *block = new char[blockSize];
 
-  int32_t hash = 7;
   for (;;) {
     auto n = _read(fd, block, blockSize);
     if (n == 0) break;
-    for (size_t i = 0; i < n; i++) {
-      hash = hash * 31 + block[i];
-    }
   }
 
   delete [] block;
-  fprintf(stdout, "%d\n", hash);
+  close(fd);
 }
 
 int main(/*int argc, char ** argv*/) { 
-struct timespec tstart={0,0}, tend={0,0};
-clock_gettime(CLOCK_MONOTONIC, &tstart);
 
   trace::init();
   {
-    trace::CompleteEvent e(__PRETTY_FUNCTION__);
+    TRACE();
 
-    scheduler::run([]() {
-      scheduler::addTask(reader);
-      scheduler::addTask(reader);
-      scheduler::addTask(reader);
-      scheduler::addTask([]() {
-        reader();
-      });
-    });
+    const auto totalCPU = 2;
 
+    for (auto i = 0; i < totalCPU; ++i) {
+      pid_t workerId = fork();
+      if (0 == workerId) {
+        scheduler::run([]() {
+          scheduler::addTask(reader);
+          scheduler::addTask(reader);
+          scheduler::addTask(reader);
+          scheduler::addTask([]() {
+            reader();
+          });
+        });
+        return 0;
+      }
+    }
+
+    for (int i = 0; i < totalCPU; ++i) {
+      int   wstatus;
+      pid_t workerId = wait(&wstatus);
+
+      printf("worker[%d]: stop\n", WEXITSTATUS(wstatus));
+    }
   }
   trace::term();
 
-clock_gettime(CLOCK_MONOTONIC, &tend);
-double delta_t = ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec);
-
-  auto count = scheduler::totalYields;
-  fprintf(stdout, "totalYields: #%ld\n", count);
-  auto timePerYield = delta_t * (1e09 / count);
-  fprintf(stdout, "%fs (%fns)\n", delta_t, timePerYield);
 }

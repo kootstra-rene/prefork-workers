@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <unistd.h>
 
 #include "scheduler.h"
 
@@ -113,6 +114,7 @@ namespace scheduler {
 
   };
 
+  int32_t _pid = -1;
   long totalYields = 0;
   struct state $main;
 
@@ -157,5 +159,12 @@ namespace scheduler {
     task->regs[7] = (long)&sstack[511];
 
     taskList.add(task);
+  }
+
+  int32_t getpid() {
+    if (-1 == _pid) {
+      _pid = ::getpid();
+    }
+    return _pid;
   }
 }

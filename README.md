@@ -8,12 +8,24 @@ and yes i am aware that the code is not perfect and it leaks memory...
 
 The *scheduler::addTask* adds a new task to the scheduler and runs the task as a stackfull coroutine.
 
-The image below shows  4 tasks running but each task does not yield and as a consequence the tasks process one by one.
+The image below shows 4 tasks running but each task does not yield and as a consequence the tasks process one by one.
 ![here](./doc/no-yield-reading.png)
 
 
 The image below the same 4 tasks running but here each task does yield and they run simultaneous
 ![here](./doc/yield-reading.png)
+
+
+## Prefork
+
+When applying pre-forking to the tasks we can run a scheduler on multiple cores. 
+
+The image below shows 4 tasks running per process but each task does not yield and as a consequence the tasks process one by one.
+![here](./doc/no-yield-reading-prefork.png)
+
+The image below the same 4 tasks running per process but here each task does yield and they run simultaneous
+![here](./doc/yield-reading-prefork.png)
+
 
 ## History
 
