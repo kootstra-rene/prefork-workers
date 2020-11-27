@@ -132,7 +132,9 @@ namespace scheduler {
     taskList.del();
 
     if (!taskList.total) {
-      ut_switch(activeTask, &$main);
+      auto callerTask = activeTask;
+      activeTask = NULL;
+      ut_switch(callerTask, &$main);
     }
 
     scheduler::yield();

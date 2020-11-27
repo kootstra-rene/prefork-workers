@@ -36,6 +36,7 @@ static void checkForLeaks() {
   printf("\ncheckForLeaks\n");
   for (auto it = umap.begin(); it != umap.end(); ++it) {
     fprintf(stdout, "  %p: %ld bytes\n", it->first, it->second);
+    free(it->first);
   }
 }
 
