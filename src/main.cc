@@ -43,7 +43,7 @@ int main(/*int argc, char ** argv*/) {
   {
     TRACE();
 
-    const auto totalCPU = 2;
+    const auto totalCPU = 1;
 
     for (auto i = 0; i < totalCPU; ++i) {
       pid_t workerId = fork();

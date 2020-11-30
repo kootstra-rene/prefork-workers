@@ -1,1 +1,1 @@
-g++ -O3 -Wall -Wextra -Wpedantic alloc.cc trace.cc scheduler.cc main.cc && time ./a.out
+g++ -O3 -Wall -Wextra -Wpedantic -I inc src/alloc.cc src/trace.cc src/scheduler.cc src/main.cc -o bin/a.out && time bin/a.out

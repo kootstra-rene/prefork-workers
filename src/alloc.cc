@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <unordered_map>
 
+#include "scheduler.h"
+
 static bool lazy = false;
 
 template <class T>
@@ -33,7 +35,7 @@ std::unordered_map<
 > umap;
 
 static void checkForLeaks() {
-  printf("\ncheckForLeaks\n");
+  printf("\ncheckForLeaks[%d]\n", scheduler::getpid());
   for (auto it = umap.begin(); it != umap.end(); ++it) {
     fprintf(stdout, "  %p: %ld bytes\n", it->first, it->second);
     free(it->first);
