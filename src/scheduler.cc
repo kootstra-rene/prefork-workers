@@ -43,6 +43,7 @@ namespace scheduler {
 
   struct state {
     long  regs[9];
+    long* stack;
   };
 
   template<typename T> struct Link {
@@ -134,11 +135,11 @@ namespace scheduler {
 
   [[ noreturn ]] void yieldGuard() {
     taskList.del();
+    // destroy the stack, should be fine because there is no preemption.
+    delete [] ((struct state *)activeTask)->stack;
 
     if (!taskList.total) {
-      auto callerTask = activeTask;
-      activeTask = NULL;
-      ut_switch(callerTask, &$main);
+      ut_switch(activeTask, &$main);
     }
 
     scheduler::yield();
@@ -150,6 +151,7 @@ namespace scheduler {
 
     activeTask = taskList.head->data;
     ut_switch(&$main, activeTask);
+    activeTask = NULL;
   }
 
   void addTask(void (*method)(), void* self) {
@@ -160,6 +162,7 @@ namespace scheduler {
     task->regs[6] = (long)method;
     task->regs[7] = (long)&sstack[511];
     task->regs[8] = (long)self;
+    task->stack = sstack;
 
     taskList.add(task);
   }

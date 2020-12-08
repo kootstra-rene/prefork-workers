@@ -35,6 +35,8 @@ std::unordered_map<
 > umap;
 
 static void checkForLeaks() {
+  if (umap.begin() == umap.end()) return;
+  
   printf("\ncheckForLeaks[%d]\n", scheduler::getpid());
   for (auto it = umap.begin(); it != umap.end(); ++it) {
     fprintf(stdout, "  %p: %ld bytes\n", it->first, it->second);

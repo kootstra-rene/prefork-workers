@@ -52,7 +52,6 @@ void idler(int workers) { TRACE();
       time.tv_sec=0;
       time.tv_nsec=1000000; // 1ms
       nanosleep(&time, nullptr);
-      printf(".");
       continue;        
     }
     else {
