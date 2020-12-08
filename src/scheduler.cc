@@ -25,11 +25,13 @@ asm(
   "movq %rbp, 40(%rdi)\n"
   "movq %rdx, 48(%rdi)\n"
   "movq %rcx, 56(%rdi)\n"
+  "movq %rdi, 64(%rdi)\n"
 
   "movq 32(%rsi), %rbx\n"
   "movq 40(%rsi), %rbp\n"
   "movq 48(%rsi), %rdx\n"
   "movq 56(%rsi), %rcx\n"
+  "movq 64(%rsi), %rdi\n"
 
   "movq %rcx, %rsp\n"
   "jmp *%rdx\n"
@@ -40,7 +42,7 @@ extern "C" void ut_switch(void *save, void *load);
 namespace scheduler {
 
   struct state {
-    long  regs[8];
+    long  regs[9];
   };
 
   template<typename T> struct Link {
@@ -150,13 +152,14 @@ namespace scheduler {
     ut_switch(&$main, activeTask);
   }
 
-  void addTask(void (*method)()) {
+  void addTask(void (*method)(), void* self) {
     long* sstack = new long[512];   // create a 4096 byte stack
     sstack[511] = (long)yieldGuard; // set return address to yieldGuard
 
     struct state * task = new struct state();
     task->regs[6] = (long)method;
     task->regs[7] = (long)&sstack[511];
+    task->regs[8] = (long)self;
 
     taskList.add(task);
   }

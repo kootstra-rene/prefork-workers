@@ -37,36 +37,62 @@ void reader() {
   close(fd);
 }
 
+void reader2(const char* path) {
+  TRACE();
+
+  int fd = open(path, O_RDONLY | O_NONBLOCK | O_NDELAY);
+  if (-1 == fd) return;
+
+  const int blockSize = 64*1024;
+  char *block = new char[blockSize];
+
+  for (;;) {
+    auto n = _read(fd, block, blockSize);
+    if (n == 0) break;
+  }
+
+  delete [] block;
+  close(fd);
+}
+
 int main(/*int argc, char ** argv*/) { 
 
   trace::init();
   {
     TRACE();
 
-    const auto totalCPU = 1;
+    const auto totalCPU = 4;
 
     for (auto i = 0; i < totalCPU; ++i) {
       pid_t workerId = fork();
       if (0 == workerId) {
-        scheduler::run([]() {
-          scheduler::addTask(reader);
-          scheduler::addTask(reader);
-          scheduler::addTask(reader);
-          scheduler::addTask([]() {
-            reader();
-          });
+        scheduler::run([]() { TRACE();
+          scheduler::task(reader);
+          scheduler::task(reader2, "../largefile.bin");
         });
         return 0;
       }
     }
 
-    for (int i = 0; i < totalCPU; ++i) {
+    // only main thread will end up here.
+    auto cnt = totalCPU;
+    while (cnt > 0) {
       int   wstatus;
-      pid_t workerId = wait(&wstatus);
-
-      printf("worker[%d]: stop\n", WEXITSTATUS(wstatus));
+      pid_t workerId = waitpid(-1, &wstatus, WNOHANG);
+      if (workerId == -1) break; else
+      if (workerId == 0) {
+        // main idle loop for processing while task run.
+        struct timespec time = {};
+        time.tv_sec=0;
+        time.tv_nsec=1000000; // 1ms
+        nanosleep(&time, nullptr);
+        printf(".");
+        continue;        
+      }
+      else {
+        printf("worker[%d]: stop:%d\n", workerId, WEXITSTATUS(wstatus));
+      }
     }
   }
   trace::term();
-
 }
