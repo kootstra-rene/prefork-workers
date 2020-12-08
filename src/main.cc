@@ -55,6 +55,27 @@ void reader2(const char* path) {
   close(fd);
 }
 
+void idler(int workers) { TRACE();
+  while (workers > 0) {
+    int   wstatus;
+    pid_t workerId = waitpid(-1, &wstatus, WNOHANG);
+    if (workerId == -1) break; else
+    if (workerId == 0) {
+      // main idle loop for processing while task run.
+      struct timespec time = {};
+      time.tv_sec=0;
+      time.tv_nsec=1000000; // 1ms
+      nanosleep(&time, nullptr);
+      printf(".");
+      continue;        
+    }
+    else {
+      printf("worker[%d]: stop:%d\n", workerId, WEXITSTATUS(wstatus));
+      workers--;
+    }
+  }
+}
+
 int main(/*int argc, char ** argv*/) { 
 
   trace::init();
@@ -75,24 +96,9 @@ int main(/*int argc, char ** argv*/) {
     }
 
     // only main thread will end up here.
-    auto cnt = totalCPU;
-    while (cnt > 0) {
-      int   wstatus;
-      pid_t workerId = waitpid(-1, &wstatus, WNOHANG);
-      if (workerId == -1) break; else
-      if (workerId == 0) {
-        // main idle loop for processing while task run.
-        struct timespec time = {};
-        time.tv_sec=0;
-        time.tv_nsec=1000000; // 1ms
-        nanosleep(&time, nullptr);
-        printf(".");
-        continue;        
-      }
-      else {
-        printf("worker[%d]: stop:%d\n", workerId, WEXITSTATUS(wstatus));
-      }
-    }
+    scheduler::run([]() { TRACE();
+      scheduler::task(idler, totalCPU);
+    });
   }
   trace::term();
 }
