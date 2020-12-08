@@ -19,25 +19,7 @@ size_t _read(int fd, char* buffer, size_t len) {
   return n;  
 }
 
-void reader() {
-  TRACE();
-
-  int fd = open("../largefile.bin", O_RDONLY | O_NONBLOCK | O_NDELAY);
-  if (-1 == fd) return;
-
-  const int blockSize = 64*1024;
-  char *block = new char[blockSize];
-
-  for (;;) {
-    auto n = _read(fd, block, blockSize);
-    if (n == 0) break;
-  }
-
-  delete [] block;
-  close(fd);
-}
-
-void reader2(const char* path) {
+void reader(const char* path) {
   TRACE();
 
   int fd = open(path, O_RDONLY | O_NONBLOCK | O_NDELAY);
@@ -53,6 +35,10 @@ void reader2(const char* path) {
 
   delete [] block;
   close(fd);
+}
+
+void reader2() {
+  reader("../largefile.bin");
 }
 
 void idler(int workers) { TRACE();
@@ -88,8 +74,8 @@ int main(/*int argc, char ** argv*/) {
       pid_t workerId = fork();
       if (0 == workerId) {
         scheduler::run([]() { TRACE();
-          scheduler::task(reader);
-          scheduler::task(reader2, "../largefile.bin");
+          scheduler::task(reader, "../largefile.bin");
+          scheduler::task(reader2);
         });
         return 0;
       }
